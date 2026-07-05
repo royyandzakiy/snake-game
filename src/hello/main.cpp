@@ -22,6 +22,36 @@ constexpr Color BgCircleColor{.r = 255, .g = 255, .b = 255, .a = 255};
 constexpr Color ScoreColor{.r = 255, .g = 255, .b = 255, .a = 255};
 } // namespace GameColors
 
+class Food {
+  public:
+	Food(Vector2 pos, const int cellSize)
+		: m_posX(static_cast<int>(pos.x)), m_posY(static_cast<int>(pos.y)), m_cellSize(cellSize) {
+		Image image = LoadImage("assets/graphics/food.png");
+		Texture2D m_texture = LoadTextureFromImage(image);
+		UnloadImage(image);
+	}
+
+	~Food() {
+		UnloadTexture(m_texture);
+	}
+
+	Food(const Food &) noexcept = delete;			 // copy ctor, const lval
+	Food &operator=(const Food &) noexcept = delete; // copy assg, const lval
+	Food(Food &&) noexcept = delete;				 // move ctor, non-const rval (std::move)
+	Food &operator=(Food &&) noexcept = delete;		 // move assg, non-const rval (std::move)
+
+	auto Draw() {
+		DrawTexture(m_texture, m_posX * m_cellSize, m_posY * m_cellSize, WHITE);
+	}
+	auto Update() {
+	}
+
+  private:
+	Texture m_texture{};
+	int m_posX, m_posY;
+	int m_cellSize;
+};
+
 class Game {
   public:
 	Game()
@@ -58,9 +88,11 @@ class Game {
 
   private:
 	void Update_prv() {
+		// ...
 	}
 
 	void Draw_prv() {
+		// ...
 	}
 };
 
