@@ -82,20 +82,6 @@ class Snake {
 	Snake &operator=(Snake &&) noexcept = delete;	   // move assg, non-const rval (std::move)
 
 	auto Update() -> void {
-		bool isMovingUp = moveDirection.y == -1;
-		bool isMovingDown = moveDirection.y == 1;
-		bool isMovingLeft = moveDirection.x == -1;
-		bool isMovingRight = moveDirection.x == 1;
-
-		if (IsKeyPressed(KEY_UP) && !isMovingDown)
-			moveDirection = {.x = 0, .y = -1};
-		if (IsKeyPressed(KEY_DOWN) && !isMovingUp)
-			moveDirection = {.x = 0, .y = 1};
-		if (IsKeyPressed(KEY_LEFT) && !isMovingRight)
-			moveDirection = {.x = -1, .y = 0};
-		if (IsKeyPressed(KEY_RIGHT) && !isMovingLeft)
-			moveDirection = {.x = 1, .y = 0};
-
 		auto currentTime = std::chrono::steady_clock::now();
 		if (currentTime - lastTime > moveInterval) {
 			if (!shouldAddSegment) {
@@ -125,6 +111,23 @@ class Snake {
 	auto Reset() -> void {
 		body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
 		moveDirection = {.x = 1, .y = 0};
+	}
+
+	auto MoveUp() -> void {
+		if (bool isMovingDown = moveDirection.y == 1; !isMovingDown)
+			moveDirection = {.x = 0, .y = -1};
+	}
+	auto MoveDown() -> void {
+		if (bool isMovingUp = moveDirection.y == -1; !isMovingUp)
+			moveDirection = {.x = 0, .y = 1};
+	}
+	auto MoveLeft() -> void {
+		if (bool isMovingRight = moveDirection.x == 1; !isMovingRight)
+			moveDirection = {.x = -1, .y = 0};
+	}
+	auto MoveRight() -> void {
+		if (bool isMovingLeft = moveDirection.x == -1; !isMovingLeft)
+			moveDirection = {.x = 1, .y = 0};
 	}
 
 	[[nodiscard]] auto GetHeadPos() const -> Vector2 {
@@ -177,6 +180,7 @@ class Game {
 			BeginDrawing();
 			ClearBackground(GameColors::BgColor);
 
+			CheckKeyPress();
 			Update();
 			Draw();
 
@@ -213,6 +217,17 @@ class Game {
 	auto Draw() -> void {
 		m_food.Draw();
 		m_snake.Draw();
+	}
+
+	auto CheckKeyPress() -> void {
+		if (IsKeyPressed(KEY_UP))
+			m_snake.MoveUp();
+		if (IsKeyPressed(KEY_DOWN))
+			m_snake.MoveDown();
+		if (IsKeyPressed(KEY_LEFT))
+			m_snake.MoveLeft();
+		if (IsKeyPressed(KEY_RIGHT))
+			m_snake.MoveRight();
 	}
 
 	auto GenerateRandomPos() -> Vector2 {
