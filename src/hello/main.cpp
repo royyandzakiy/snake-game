@@ -1,6 +1,10 @@
+#include <chrono>
 #include <deque>
 #include <fmt/base.h>
 #include <raylib.h>
+#include <utility>
+
+using namespace std::chrono_literals;
 
 namespace GameConfig {
 constexpr const char *gameTitle{"Pong Game"};
@@ -69,6 +73,25 @@ class Snake {
 	Snake(Snake &&) noexcept = default;				   // move ctor, non-const rval (std::move)
 	Snake &operator=(Snake &&) noexcept = default;	   // move assg, non-const rval (std::move)
 
+	auto Update() -> void {
+		// read keys
+		if (IsKeyPressed(KEY_UP))
+			moveDirection = {0, -1};
+		if (IsKeyPressed(KEY_DOWN))
+			moveDirection = {0, 1};
+		if (IsKeyPressed(KEY_LEFT))
+			moveDirection = {-1, 0};
+		if (IsKeyPressed(KEY_RIGHT))
+			moveDirection = {1, 0};
+
+		auto currentTime = std::chrono::steady_clock::now();
+		if (currentTime - lastTime > moveInterval) {
+			body.pop_back();
+			body.push_front(Vector2{body.at(0).x + moveDirection.x, body.at(0).y + moveDirection.y});
+			lastTime = std::chrono::steady_clock::now();
+		}
+	}
+
 	auto Draw() -> void {
 		for (size_t i = 0; i < body.size(); ++i) {
 			float x = body.at(i).x;
@@ -81,14 +104,11 @@ class Snake {
 		}
 	}
 
-	auto Update() -> void {
-		body.pop_back();
-		body.push_front(Vector2{body.at(0).x + moveDir.x, body.at(0).y + moveDir.y});
-	}
-
   private:
 	std::deque<Vector2> body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
-	Vector2 moveDir{1, 0};
+	Vector2 moveDirection{1, 0};
+	std::chrono::time_point<std::chrono::steady_clock> lastTime{};
+	const std::chrono::milliseconds moveInterval = 200ms;
 };
 
 class Game {
