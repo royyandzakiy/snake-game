@@ -6,6 +6,7 @@
 #include <fmt/base.h>
 #include <iterator>
 #include <raylib.h>
+#include <string>
 #include <utility>
 
 using namespace std::chrono_literals;
@@ -54,8 +55,8 @@ class Food {
 	Food &operator=(Food &&) noexcept = default;	 // move assg, non-const rval (std::move)
 
 	auto Draw() -> void {
-		DrawTexture(m_texture, m_posX * static_cast<int>(GameConfig::cellSize),
-					m_posY * static_cast<int>(GameConfig::cellSize), WHITE);
+		DrawTexture(m_texture, GameConfig::borderOffset + m_posX * static_cast<int>(GameConfig::cellSize),
+					GameConfig::borderOffset + m_posY * static_cast<int>(GameConfig::cellSize), WHITE);
 	}
 	auto Update() -> void {
 	}
@@ -106,8 +107,8 @@ class Snake {
 
 	auto Draw() -> void {
 		std::ranges::for_each(body, [](const auto &segmentPos) {
-			Rectangle segment{.x = segmentPos.x * GameConfig::cellSize,
-							  .y = segmentPos.y * GameConfig::cellSize,
+			Rectangle segment{.x = GameConfig::borderOffset + segmentPos.x * GameConfig::cellSize,
+							  .y = GameConfig::borderOffset + segmentPos.y * GameConfig::cellSize,
 							  .width = GameConfig::cellSize,
 							  .height = GameConfig::cellSize};
 			DrawRectangleRounded(segment, 0.5, 6, GameColors::SnakeColor);
@@ -205,6 +206,10 @@ class Game {
 		while (WindowShouldClose() == false) {
 			BeginDrawing();
 			ClearBackground(GameColors::BgColor);
+			DrawText("Retro Snake", GameConfig::borderOffset - 5, 20, 40, GameColors::BorderColor);
+			DrawText(std::to_string(gameScore).c_str(), GameConfig::borderOffset - 5,
+					 GameConfig::borderOffset + GameConfig::cellSize * GameConfig::cellCount + 10, 40,
+					 GameColors::BorderColor);
 			DrawRectangleLinesEx(Rectangle{.x = GameConfig::borderOffset - 5,
 										   .y = GameConfig::borderOffset - 5,
 										   .width = GameConfig::cellSize * GameConfig::cellCount + 10,
@@ -222,6 +227,7 @@ class Game {
   private:
 	Snake m_snake;
 	Food m_food;
+	int gameScore{0};
 
 	auto IsSnakeFoodCollide() -> bool {
 		return static_cast<int>(m_snake.GetHeadPos().x) == m_food.getPosX() &&
@@ -251,7 +257,7 @@ class Game {
 			auto newPos = GenerateRandomPos();
 			m_food.setPosVec(newPos);
 			m_snake.SetShouldAddSegment();
-			// increase score
+			gameScore++;
 		}
 
 		m_food.Update();
@@ -296,6 +302,7 @@ class Game {
 		m_food.setPosVec(foodNewPos);
 		m_snake.Reset();
 		m_snake.MoveStop();
+		gameScore = 0;
 	}
 };
 
