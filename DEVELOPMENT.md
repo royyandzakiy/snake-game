@@ -1,4 +1,4 @@
-- make a 2d side scroller, scrolls to the left. just simple red box. movable by keyboard
-    - randomly generates blocks that flies to the left
-    - create collisions, then gameover
-    - create score based on time
+template for
+thread
+ranges
+add more clang tidy
