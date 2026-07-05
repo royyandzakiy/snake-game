@@ -22,13 +22,12 @@ constexpr Color BgCircleColor{.r = 255, .g = 255, .b = 255, .a = 255};
 constexpr Color ScoreColor{.r = 255, .g = 255, .b = 255, .a = 255};
 } // namespace GameColors
 
+static const int cellSize = 30;
+static const int cellCount = 25;
+
 class Food {
   public:
-	Food(Vector2 pos, const int cellSize)
-		: m_posX(static_cast<int>(pos.x)), m_posY(static_cast<int>(pos.y)), m_cellSize(cellSize) {
-		Image image = LoadImage("assets/graphics/food.png");
-		Texture2D m_texture = LoadTextureFromImage(image);
-		UnloadImage(image);
+	Food(Vector2 pos) : m_posX(static_cast<int>(pos.x)), m_posY(static_cast<int>(pos.y)) {
 	}
 
 	~Food() {
@@ -37,30 +36,45 @@ class Food {
 
 	Food(const Food &) noexcept = delete;			 // copy ctor, const lval
 	Food &operator=(const Food &) noexcept = delete; // copy assg, const lval
-	Food(Food &&) noexcept = delete;				 // move ctor, non-const rval (std::move)
+	Food(Food &&) noexcept = default;				 // move ctor, non-const rval (std::move)
 	Food &operator=(Food &&) noexcept = delete;		 // move assg, non-const rval (std::move)
 
-	auto Draw() {
-		DrawTexture(m_texture, m_posX * m_cellSize, m_posY * m_cellSize, WHITE);
+	auto Init() -> void {
+		const char *path = "C:/project-coding/cpp/202606/snake-game/assets/imgs/food.png";
+
+		if (FileExists(path)) {
+			Image image = LoadImage(path);
+			m_texture = LoadTextureFromImage(image);
+			UnloadImage(image);
+
+			if (m_texture.id == 0) {
+				TraceLog(LOG_ERROR, "texture fails to load!");
+			}
+
+			TraceLog(LOG_INFO, "Food texture loaded: %dx%d", m_texture.width, m_texture.height);
+		}
 	}
-	auto Update() {
+
+	auto Draw() -> void {
+		DrawTexture(m_texture, m_posX * cellSize, m_posY * cellSize, WHITE);
+	}
+	auto Update() -> void {
 	}
 
   private:
-	Texture m_texture{};
+	Texture2D m_texture{};
 	int m_posX, m_posY;
-	int m_cellSize;
 };
 
 class Game {
   public:
-	Game()
-	// :
-	{
+	Game(Food &&food) : m_food(std::move(food)) {
 
 		InitWindow(static_cast<int>(GameConfig::windowWidth), static_cast<int>(GameConfig::windowHeight),
 				   GameConfig::gameTitle);
 		SetTargetFPS(60);
+
+		m_food.Init();
 	}
 
 	// Game() = delete; // remove default ctor
@@ -74,7 +88,7 @@ class Game {
 	Game(Game &&) noexcept = delete;				 // move ctor, non-const rval (std::move)
 	Game &operator=(Game &&) noexcept = delete;		 // move assg, non-const rval (std::move)
 
-	void Run() {
+	auto Run() -> void {
 		while (WindowShouldClose() == false) {
 			BeginDrawing();
 			ClearBackground(GameColors::BgColor);
@@ -87,17 +101,20 @@ class Game {
 	}
 
   private:
-	void Update_prv() {
-		// ...
+	Food m_food;
+
+	auto Update_prv() -> void {
+		m_food.Update();
 	}
 
-	void Draw_prv() {
-		// ...
+	auto Draw_prv() -> void {
+		m_food.Draw();
 	}
 };
 
 auto main() -> int {
-	Game game{};
+	Food food{Vector2{.x = 5, .y = 6}};
+	Game game{std::move(food)};
 
 	game.Run();
 	return 0;
