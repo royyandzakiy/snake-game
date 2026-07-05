@@ -58,6 +58,19 @@ class Food {
 	auto Update() -> void {
 	}
 
+	auto setPosX(const int x) -> void {
+		m_posX = x;
+	}
+	auto setPosY(const int y) -> void {
+		m_posY = y;
+	}
+	[[nodiscard]] auto getPosX() const -> int {
+		return m_posX;
+	}
+	[[nodiscard]] auto getPosY() const -> int {
+		return m_posY;
+	}
+
   private:
 	Texture2D m_texture{};
 	int m_posX, m_posY;
@@ -74,7 +87,6 @@ class Snake {
 	Snake &operator=(Snake &&) noexcept = default;	   // move assg, non-const rval (std::move)
 
 	auto Update() -> void {
-		// read keys
 		bool isMovingUp = moveDirection.y == -1;
 		bool isMovingDown = moveDirection.y == 1;
 		bool isMovingLeft = moveDirection.x == -1;
@@ -109,6 +121,10 @@ class Snake {
 		}
 	}
 
+	[[nodiscard]] auto GetHeadPos() const -> Vector2 {
+		return body.at(0);
+	}
+
   private:
 	std::deque<Vector2> body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
 	Vector2 moveDirection{1, 0};
@@ -118,7 +134,7 @@ class Snake {
 
 class Game {
   public:
-	Game(Snake &&snake) : m_food(Food{generateRandomPos()}), m_snake(std::move(snake)) {
+	Game(Snake &&snake) : m_food(Food{generateRandomPos_prv()}), m_snake(std::move(snake)) {
 	}
 
 	// Game() = delete; // remove default ctor
@@ -147,6 +163,15 @@ class Game {
 	Snake m_snake;
 
 	auto Update_prv() -> void {
+		bool isSnakeFoodCollide = static_cast<int>(m_snake.GetHeadPos().x) == m_food.getPosX() &&
+								  static_cast<int>(m_snake.GetHeadPos().y) == m_food.getPosY();
+
+		if (isSnakeFoodCollide) {
+			auto newPos = generateRandomPos_prv();
+			m_food.setPosX(static_cast<int>(newPos.x));
+			m_food.setPosX(static_cast<int>(newPos.y));
+		}
+
 		m_food.Update();
 		m_snake.Update();
 	}
@@ -156,7 +181,7 @@ class Game {
 		m_snake.Draw();
 	}
 
-	auto generateRandomPos() -> Vector2 {
+	auto generateRandomPos_prv() -> Vector2 {
 		auto x = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
 		auto y = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
 		return Vector2{.x = x, .y = y};
