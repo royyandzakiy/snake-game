@@ -75,13 +75,18 @@ class Snake {
 
 	auto Update() -> void {
 		// read keys
-		if (IsKeyPressed(KEY_UP))
+		bool isMovingUp = moveDirection.y == -1;
+		bool isMovingDown = moveDirection.y == 1;
+		bool isMovingLeft = moveDirection.x == -1;
+		bool isMovingRight = moveDirection.x == 1;
+
+		if (IsKeyPressed(KEY_UP) && !isMovingDown)
 			moveDirection = {0, -1};
-		if (IsKeyPressed(KEY_DOWN))
+		if (IsKeyPressed(KEY_DOWN) && !isMovingUp)
 			moveDirection = {0, 1};
-		if (IsKeyPressed(KEY_LEFT))
+		if (IsKeyPressed(KEY_LEFT) && !isMovingRight)
 			moveDirection = {-1, 0};
-		if (IsKeyPressed(KEY_RIGHT))
+		if (IsKeyPressed(KEY_RIGHT) && !isMovingLeft)
 			moveDirection = {1, 0};
 
 		auto currentTime = std::chrono::steady_clock::now();
