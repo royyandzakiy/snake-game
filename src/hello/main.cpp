@@ -4,7 +4,7 @@
 
 namespace GameConfig {
 constexpr const char *gameTitle{"Pong Game"};
-constexpr int cellSize{30};
+constexpr float cellSize{30};
 constexpr int cellCount{25};
 constexpr float windowWidth{cellSize * cellCount};
 constexpr float windowHeight{cellSize * cellCount};
@@ -17,6 +17,7 @@ constexpr Color BgColor{.r = 173, .g = 204, .b = 96, .a = 255};
 constexpr Color BgLeftColor{.r = 225, .g = 230, .b = 239, .a = 255}; // e1e6ef
 constexpr Color BgCircleColor{.r = 255, .g = 255, .b = 255, .a = 255};
 constexpr Color ScoreColor{.r = 255, .g = 255, .b = 255, .a = 255};
+constexpr Color SnakeColor{.r = 43, .g = 51, .b = 24, .a = 255};
 } // namespace GameColors
 
 class Food {
@@ -47,7 +48,8 @@ class Food {
 	Food &operator=(Food &&) noexcept = default;	 // move assg, non-const rval (std::move)
 
 	auto Draw() -> void {
-		DrawTexture(m_texture, m_posX * GameConfig::cellSize, m_posY * GameConfig::cellSize, WHITE);
+		DrawTexture(m_texture, m_posX * static_cast<int>(GameConfig::cellSize),
+					m_posY * static_cast<int>(GameConfig::cellSize), WHITE);
 	}
 	auto Update() -> void {
 	}
@@ -69,10 +71,13 @@ class Snake {
 
 	auto Draw() -> void {
 		for (size_t i = 0; i < body.size(); ++i) {
-			int x = body[i].x;
-			int y = body[i].y;
-			DrawRectangle(x * GameConfig::cellSize, y * GameConfig::cellSize, GameConfig::cellSize,
-						  GameConfig::cellSize, WHITE);
+			float x = body.at(i).x;
+			float y = body.at(i).y;
+			Rectangle segment{.x = x * GameConfig::cellSize,
+							  .y = y * GameConfig::cellSize,
+							  .width = GameConfig::cellSize,
+							  .height = GameConfig::cellSize};
+			DrawRectangleRounded(segment, 0.5, 6, GameColors::SnakeColor);
 		}
 	}
 
@@ -80,7 +85,7 @@ class Snake {
 	}
 
   private:
-	std::deque<Vector2> body = {Vector2{6, 9}, Vector2{5, 9}, Vector2{4, 9}};
+	std::deque<Vector2> body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
 };
 
 class Game {
