@@ -191,6 +191,9 @@ class Snake {
 class Game {
   public:
 	Game(Snake &&snake) : m_snake(std::move(snake)), m_food(Food{GenerateRandomPos()}) {
+		InitAudioDevice();
+		eatSound = LoadSound("C:/project-coding/cpp/202606/snake-game/assets/audio/eat.mp3");
+		gameoverSound = LoadSound("C:/project-coding/cpp/202606/snake-game/assets/audio/wall.mp3");
 	}
 
 	// Game() = delete; // remove default ctor
@@ -228,6 +231,8 @@ class Game {
 	Snake m_snake;
 	Food m_food;
 	int gameScore{0};
+	Sound eatSound{};
+	Sound gameoverSound{};
 
 	auto IsSnakeFoodCollide() -> bool {
 		return static_cast<int>(m_snake.GetHeadPos().x) == m_food.getPosX() &&
@@ -258,6 +263,7 @@ class Game {
 			m_food.setPosVec(newPos);
 			m_snake.SetShouldAddSegment();
 			gameScore++;
+			PlaySound(eatSound);
 		}
 
 		m_food.Update();
@@ -303,6 +309,7 @@ class Game {
 		m_snake.Reset();
 		m_snake.MoveStop();
 		gameScore = 0;
+		PlaySound(gameoverSound);
 	}
 };
 
