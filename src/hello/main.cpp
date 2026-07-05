@@ -98,16 +98,24 @@ class Snake {
 
 		auto currentTime = std::chrono::steady_clock::now();
 		if (currentTime - lastTime > moveInterval) {
-			body.pop_back();
-			body.push_front(Vector2{.x = body.at(0).x + moveDirection.x, .y = body.at(0).y + moveDirection.y});
+			if (!shouldAddSegment) {
+				body.pop_back(); // remove tail to look moving
+			} else {
+				// do NOT remove tail to look growing
+				shouldAddSegment = false;
+			}
+
+			body.push_front(
+				Vector2{.x = body.at(0).x + moveDirection.x, .y = body.at(0).y + moveDirection.y}); // move head forward
+
 			lastTime = std::chrono::steady_clock::now();
 		}
 	}
 
 	auto Draw() -> void {
-		std::ranges::for_each(body, [](const auto &pos) {
-			Rectangle segment{.x = pos.x * GameConfig::cellSize,
-							  .y = pos.y * GameConfig::cellSize,
+		std::ranges::for_each(body, [](const auto &segmentPos) {
+			Rectangle segment{.x = segmentPos.x * GameConfig::cellSize,
+							  .y = segmentPos.y * GameConfig::cellSize,
 							  .width = GameConfig::cellSize,
 							  .height = GameConfig::cellSize};
 			DrawRectangleRounded(segment, 0.5, 6, GameColors::SnakeColor);
@@ -133,11 +141,16 @@ class Snake {
 			   }) != body.end();
 	}
 
+	auto SetShouldAddSegment() -> void {
+		shouldAddSegment = true;
+	}
+
   private:
 	std::deque<Vector2> body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
 	Vector2 moveDirection{.x = 1, .y = 0};
 	std::chrono::time_point<std::chrono::steady_clock> lastTime{};
 	std::chrono::milliseconds moveInterval = 200ms;
+	bool shouldAddSegment{false};
 };
 
 class Game {
@@ -177,6 +190,7 @@ class Game {
 		if (isSnakeFoodCollide) {
 			auto newPos = GenerateRandomPos();
 			m_food.setPosVec(newPos);
+			m_snake.SetShouldAddSegment();
 		}
 
 		m_food.Update();
