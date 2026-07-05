@@ -82,10 +82,13 @@ class Snake {
 	}
 
 	auto Update() -> void {
+		body.pop_back();
+		body.push_front(Vector2{body.at(0).x + moveDir.x, body.at(0).y + moveDir.y});
 	}
 
   private:
 	std::deque<Vector2> body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
+	Vector2 moveDir{1, 0};
 };
 
 class Game {
