@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdio>
 #include <deque>
 #include <fmt/base.h>
+#include <iterator>
 #include <raylib.h>
 #include <utility>
 
@@ -110,6 +112,9 @@ class Snake {
 		});
 	}
 
+	[[nodiscard]] auto GetSize() const -> size_t {
+		return body.size();
+	}
 	auto Reset() -> void {
 		body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
 		moveDirection = {.x = 1, .y = 0};
@@ -149,18 +154,22 @@ class Snake {
 		return body.at(0);
 	}
 
-	[[nodiscard]] auto IsValid() const -> bool {
+	[[nodiscard]] auto IsInvalid() const -> bool {
 		return body.empty() || body.size() == static_cast<size_t>(-1);
 	}
 
-	[[nodiscard]] auto IsInBody(Vector2 vec) const -> bool {
-		if (IsValid()) {
+	[[nodiscard]] auto IsInBody(Vector2 element, size_t skipBodySegmentCount = 0) const -> bool {
+		if (IsInvalid()) {
 			fmt::println(stderr, "WARNING: body is invalid in IsInBody!");
 			return false;
 		}
 
-		return std::ranges::find_if(body, [&vec](const Vector2 &bodySegment) -> bool {
-				   return bodySegment.x == vec.x && bodySegment.y == vec.y;
+		if (skipBodySegmentCount < 0)
+			return false;
+
+		auto start = std::next(body.begin(), static_cast<ptrdiff_t>(skipBodySegmentCount));
+		return std::ranges::find_if(start, body.end(), [&element](const Vector2 &bodySegment) -> bool {
+				   return bodySegment.x == element.x && bodySegment.y == element.y;
 			   }) != body.end();
 	}
 
@@ -207,22 +216,35 @@ class Game {
 	Snake m_snake;
 	Food m_food;
 
-	auto Update() -> void {
-		bool isSnakeFoodCollide = static_cast<int>(m_snake.GetHeadPos().x) == m_food.getPosX() &&
-								  static_cast<int>(m_snake.GetHeadPos().y) == m_food.getPosY();
-		bool isSnakeWallCollid = static_cast<int>(m_snake.GetHeadPos().x) == GameConfig::cellCount ||
-								 static_cast<int>(m_snake.GetHeadPos().x) == -1 ||
-								 static_cast<int>(m_snake.GetHeadPos().y) == GameConfig::cellCount ||
-								 static_cast<int>(m_snake.GetHeadPos().y) == -1;
+	auto IsSnakeFoodCollide() -> bool {
+		return static_cast<int>(m_snake.GetHeadPos().x) == m_food.getPosX() &&
+			   static_cast<int>(m_snake.GetHeadPos().y) == m_food.getPosY();
+	}
 
-		if (isSnakeFoodCollide) {
+	auto IsSnakeWallCollide() -> bool {
+		return static_cast<int>(m_snake.GetHeadPos().x) == GameConfig::cellCount ||
+			   static_cast<int>(m_snake.GetHeadPos().x) == -1 ||
+			   static_cast<int>(m_snake.GetHeadPos().y) == GameConfig::cellCount ||
+			   static_cast<int>(m_snake.GetHeadPos().y) == -1;
+	}
+
+	auto IsSnakeHeadTailCollide() -> bool {
+		if (m_snake.GetSize() <= 4)
+			return false;
+
+		return m_snake.IsInBody(m_snake.GetHeadPos(), 1);
+	}
+
+	auto Update() -> void {
+		if (IsSnakeWallCollide() || IsSnakeHeadTailCollide()) {
+			GameOver();
+		}
+
+		if (IsSnakeFoodCollide()) {
 			auto newPos = GenerateRandomPos();
 			m_food.setPosVec(newPos);
 			m_snake.SetShouldAddSegment();
-		}
-
-		if (isSnakeWallCollid) {
-			GameOver();
+			// increase score
 		}
 
 		m_food.Update();
