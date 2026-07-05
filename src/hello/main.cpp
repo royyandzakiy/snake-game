@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <deque>
 #include <fmt/base.h>
 #include <raylib.h>
@@ -15,12 +17,7 @@ constexpr float windowHeight{cellSize * cellCount};
 }; // namespace GameConfig
 
 namespace GameColors {
-constexpr Color BallColor{.r = 230, .g = 247, .b = 0, .a = 255};
-constexpr Color PaddleColor{.r = 66, .g = 10, .b = 252, .a = 255};
 constexpr Color BgColor{.r = 173, .g = 204, .b = 96, .a = 255};
-constexpr Color BgLeftColor{.r = 225, .g = 230, .b = 239, .a = 255}; // e1e6ef
-constexpr Color BgCircleColor{.r = 255, .g = 255, .b = 255, .a = 255};
-constexpr Color ScoreColor{.r = 255, .g = 255, .b = 255, .a = 255};
 constexpr Color SnakeColor{.r = 43, .g = 51, .b = 24, .a = 255};
 } // namespace GameColors
 
@@ -35,10 +32,10 @@ class Food {
 			UnloadImage(image);
 
 			if (m_texture.id == 0) {
-				TraceLog(LOG_ERROR, "texture fails to load!");
+				fmt::println(stderr, "texture fails to load!");
 			}
 
-			TraceLog(LOG_INFO, "Food texture loaded: %dx%d", m_texture.width, m_texture.height);
+			fmt::println("Food texture loaded: {}x{}", m_texture.width, m_texture.height);
 		}
 	}
 
@@ -58,11 +55,9 @@ class Food {
 	auto Update() -> void {
 	}
 
-	auto setPosX(const int x) -> void {
-		m_posX = x;
-	}
-	auto setPosY(const int y) -> void {
-		m_posY = y;
+	auto setPosVec(Vector2 vec) -> void {
+		m_posX = static_cast<int>(vec.x);
+		m_posY = static_cast<int>(vec.y);
 	}
 	[[nodiscard]] auto getPosX() const -> int {
 		return m_posX;
@@ -84,7 +79,7 @@ class Snake {
 	Snake(const Snake &) noexcept = delete;			   // copy ctor, const lval
 	Snake &operator=(const Snake &) noexcept = delete; // copy assg, const lval
 	Snake(Snake &&) noexcept = default;				   // move ctor, non-const rval (std::move)
-	Snake &operator=(Snake &&) noexcept = default;	   // move assg, non-const rval (std::move)
+	Snake &operator=(Snake &&) noexcept = delete;	   // move assg, non-const rval (std::move)
 
 	auto Update() -> void {
 		bool isMovingUp = moveDirection.y == -1;
@@ -93,48 +88,61 @@ class Snake {
 		bool isMovingRight = moveDirection.x == 1;
 
 		if (IsKeyPressed(KEY_UP) && !isMovingDown)
-			moveDirection = {0, -1};
+			moveDirection = {.x = 0, .y = -1};
 		if (IsKeyPressed(KEY_DOWN) && !isMovingUp)
-			moveDirection = {0, 1};
+			moveDirection = {.x = 0, .y = 1};
 		if (IsKeyPressed(KEY_LEFT) && !isMovingRight)
-			moveDirection = {-1, 0};
+			moveDirection = {.x = -1, .y = 0};
 		if (IsKeyPressed(KEY_RIGHT) && !isMovingLeft)
-			moveDirection = {1, 0};
+			moveDirection = {.x = 1, .y = 0};
 
 		auto currentTime = std::chrono::steady_clock::now();
 		if (currentTime - lastTime > moveInterval) {
 			body.pop_back();
-			body.push_front(Vector2{body.at(0).x + moveDirection.x, body.at(0).y + moveDirection.y});
+			body.push_front(Vector2{.x = body.at(0).x + moveDirection.x, .y = body.at(0).y + moveDirection.y});
 			lastTime = std::chrono::steady_clock::now();
 		}
 	}
 
 	auto Draw() -> void {
-		for (size_t i = 0; i < body.size(); ++i) {
-			float x = body.at(i).x;
-			float y = body.at(i).y;
-			Rectangle segment{.x = x * GameConfig::cellSize,
-							  .y = y * GameConfig::cellSize,
+		std::ranges::for_each(body, [](const auto &pos) {
+			Rectangle segment{.x = pos.x * GameConfig::cellSize,
+							  .y = pos.y * GameConfig::cellSize,
 							  .width = GameConfig::cellSize,
 							  .height = GameConfig::cellSize};
 			DrawRectangleRounded(segment, 0.5, 6, GameColors::SnakeColor);
-		}
+		});
 	}
 
 	[[nodiscard]] auto GetHeadPos() const -> Vector2 {
 		return body.at(0);
 	}
 
+	[[nodiscard]] auto IsValid() const -> bool {
+		return body.empty() || body.size() == static_cast<size_t>(-1);
+	}
+
+	[[nodiscard]] auto IsInBody(Vector2 vec) const -> bool {
+		if (IsValid()) {
+			fmt::println(stderr, "WARNING: body is invalid in IsInBody!");
+			return false;
+		}
+
+		return std::ranges::find_if(body, [&vec](const Vector2 &bodySegment) -> bool {
+				   return bodySegment.x == vec.x && bodySegment.y == vec.y;
+			   }) != body.end();
+	}
+
   private:
 	std::deque<Vector2> body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
-	Vector2 moveDirection{1, 0};
+	Vector2 moveDirection{.x = 1, .y = 0};
 	std::chrono::time_point<std::chrono::steady_clock> lastTime{};
-	const std::chrono::milliseconds moveInterval = 200ms;
+	std::chrono::milliseconds moveInterval = 200ms;
 };
 
 class Game {
   public:
-	Game(Snake &&snake) : m_food(Food{generateRandomPos_prv()}), m_snake(std::move(snake)) {
+	Game(Snake &&snake) : m_snake(std::move(snake)), m_food(Food{GenerateRandomPos()}) {
 	}
 
 	// Game() = delete; // remove default ctor
@@ -151,40 +159,46 @@ class Game {
 			BeginDrawing();
 			ClearBackground(GameColors::BgColor);
 
-			Update_prv();
-			Draw_prv();
+			Update();
+			Draw();
 
 			EndDrawing();
 		}
 	}
 
   private:
-	Food m_food;
 	Snake m_snake;
+	Food m_food;
 
-	auto Update_prv() -> void {
+	auto Update() -> void {
 		bool isSnakeFoodCollide = static_cast<int>(m_snake.GetHeadPos().x) == m_food.getPosX() &&
 								  static_cast<int>(m_snake.GetHeadPos().y) == m_food.getPosY();
 
 		if (isSnakeFoodCollide) {
-			auto newPos = generateRandomPos_prv();
-			m_food.setPosX(static_cast<int>(newPos.x));
-			m_food.setPosX(static_cast<int>(newPos.y));
+			auto newPos = GenerateRandomPos();
+			m_food.setPosVec(newPos);
 		}
 
 		m_food.Update();
 		m_snake.Update();
 	}
 
-	auto Draw_prv() -> void {
+	auto Draw() -> void {
 		m_food.Draw();
 		m_snake.Draw();
 	}
 
-	auto generateRandomPos_prv() -> Vector2 {
-		auto x = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
-		auto y = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
-		return Vector2{.x = x, .y = y};
+	auto GenerateRandomPos() -> Vector2 {
+		auto randPosX = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
+		auto randPosY = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
+
+		// check if pos is inside snake
+		while (m_snake.IsInBody(Vector2{.x = randPosX, .y = randPosY})) {
+			randPosX = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
+			randPosY = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
+		}
+
+		return Vector2{.x = randPosX, .y = randPosY};
 	}
 };
 
