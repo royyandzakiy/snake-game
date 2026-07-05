@@ -122,6 +122,11 @@ class Snake {
 		});
 	}
 
+	auto Reset() -> void {
+		body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
+		moveDirection = {.x = 1, .y = 0};
+	}
+
 	[[nodiscard]] auto GetHeadPos() const -> Vector2 {
 		return body.at(0);
 	}
@@ -146,7 +151,7 @@ class Snake {
 	}
 
   private:
-	std::deque<Vector2> body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
+	std::deque<Vector2> body{Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
 	Vector2 moveDirection{.x = 1, .y = 0};
 	std::chrono::time_point<std::chrono::steady_clock> lastTime{};
 	std::chrono::milliseconds moveInterval = 200ms;
@@ -186,11 +191,19 @@ class Game {
 	auto Update() -> void {
 		bool isSnakeFoodCollide = static_cast<int>(m_snake.GetHeadPos().x) == m_food.getPosX() &&
 								  static_cast<int>(m_snake.GetHeadPos().y) == m_food.getPosY();
+		bool isSnakeWallCollid = static_cast<int>(m_snake.GetHeadPos().x) == GameConfig::cellCount ||
+								 static_cast<int>(m_snake.GetHeadPos().x) == -1 ||
+								 static_cast<int>(m_snake.GetHeadPos().y) == GameConfig::cellCount ||
+								 static_cast<int>(m_snake.GetHeadPos().y) == -1;
 
 		if (isSnakeFoodCollide) {
 			auto newPos = GenerateRandomPos();
 			m_food.setPosVec(newPos);
 			m_snake.SetShouldAddSegment();
+		}
+
+		if (isSnakeWallCollid) {
+			GameOver();
 		}
 
 		m_food.Update();
@@ -213,6 +226,12 @@ class Game {
 		}
 
 		return Vector2{.x = randPosX, .y = randPosY};
+	}
+
+	auto GameOver() -> void {
+		auto foodNewPos = GenerateRandomPos();
+		m_food.setPosVec(foodNewPos);
+		m_snake.Reset();
 	}
 };
 
