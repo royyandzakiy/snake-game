@@ -14,6 +14,7 @@ constexpr float cellSize{30};
 constexpr int cellCount{25};
 constexpr float windowWidth{cellSize * cellCount};
 constexpr float windowHeight{cellSize * cellCount};
+constexpr float snakeDefaultMoveSpeed = 5.0f;
 }; // namespace GameConfig
 
 namespace GameColors {
@@ -83,6 +84,7 @@ class Snake {
 
 	auto Update() -> void {
 		auto currentTime = std::chrono::steady_clock::now();
+		std::chrono::duration<float> moveInterval = std::chrono::duration<float>(1.0f / moveSpeed);
 		if (currentTime - lastTime > moveInterval) {
 			if (!shouldAddSegment) {
 				body.pop_back(); // remove tail to look moving
@@ -112,22 +114,35 @@ class Snake {
 		body = {Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
 		moveDirection = {.x = 1, .y = 0};
 	}
-
+	auto MoveStart() -> void {
+		moveSpeed = GameConfig::snakeDefaultMoveSpeed;
+	}
+	auto MoveStop() -> void {
+		moveSpeed = 0.0f;
+	}
 	auto MoveUp() -> void {
 		if (bool isMovingDown = moveDirection.y == 1; !isMovingDown)
 			moveDirection = {.x = 0, .y = -1};
+		if (moveSpeed == 0.0f)
+			MoveStart();
 	}
 	auto MoveDown() -> void {
 		if (bool isMovingUp = moveDirection.y == -1; !isMovingUp)
 			moveDirection = {.x = 0, .y = 1};
+		if (moveSpeed == 0.0f)
+			MoveStart();
 	}
 	auto MoveLeft() -> void {
 		if (bool isMovingRight = moveDirection.x == 1; !isMovingRight)
 			moveDirection = {.x = -1, .y = 0};
+		if (moveSpeed == 0.0f)
+			MoveStart();
 	}
 	auto MoveRight() -> void {
 		if (bool isMovingLeft = moveDirection.x == -1; !isMovingLeft)
 			moveDirection = {.x = 1, .y = 0};
+		if (moveSpeed == 0.0f)
+			MoveStart();
 	}
 
 	[[nodiscard]] auto GetHeadPos() const -> Vector2 {
@@ -157,7 +172,7 @@ class Snake {
 	std::deque<Vector2> body{Vector2{.x = 6, .y = 9}, Vector2{.x = 5, .y = 9}, Vector2{.x = 4, .y = 9}};
 	Vector2 moveDirection{.x = 1, .y = 0};
 	std::chrono::time_point<std::chrono::steady_clock> lastTime{};
-	std::chrono::milliseconds moveInterval = 200ms;
+	float moveSpeed{GameConfig::snakeDefaultMoveSpeed};
 	bool shouldAddSegment{false};
 };
 
@@ -220,14 +235,18 @@ class Game {
 	}
 
 	auto CheckKeyPress() -> void {
-		if (IsKeyPressed(KEY_UP))
+		if (IsKeyPressed(KEY_UP)) {
 			m_snake.MoveUp();
-		if (IsKeyPressed(KEY_DOWN))
+		}
+		if (IsKeyPressed(KEY_DOWN)) {
 			m_snake.MoveDown();
-		if (IsKeyPressed(KEY_LEFT))
+		}
+		if (IsKeyPressed(KEY_LEFT)) {
 			m_snake.MoveLeft();
-		if (IsKeyPressed(KEY_RIGHT))
+		}
+		if (IsKeyPressed(KEY_RIGHT)) {
 			m_snake.MoveRight();
+		}
 	}
 
 	auto GenerateRandomPos() -> Vector2 {
@@ -247,6 +266,7 @@ class Game {
 		auto foodNewPos = GenerateRandomPos();
 		m_food.setPosVec(foodNewPos);
 		m_snake.Reset();
+		m_snake.MoveStop();
 	}
 };
 
