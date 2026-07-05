@@ -27,18 +27,6 @@ constexpr Color ScoreColor{.r = 255, .g = 255, .b = 255, .a = 255};
 class Food {
   public:
 	Food(Vector2 pos) : m_posX(static_cast<int>(pos.x)), m_posY(static_cast<int>(pos.y)) {
-	}
-
-	~Food() {
-		UnloadTexture(m_texture);
-	}
-
-	Food(const Food &) noexcept = delete;			 // copy ctor, const lval
-	Food &operator=(const Food &) noexcept = delete; // copy assg, const lval
-	Food(Food &&) noexcept = default;				 // move ctor, non-const rval (std::move)
-	Food &operator=(Food &&) noexcept = delete;		 // move assg, non-const rval (std::move)
-
-	auto Init() -> void {
 		const char *path = "C:/project-coding/cpp/202606/snake-game/assets/imgs/food.png";
 
 		if (FileExists(path)) {
@@ -54,6 +42,15 @@ class Food {
 		}
 	}
 
+	~Food() {
+		UnloadTexture(m_texture);
+	}
+
+	Food(const Food &) noexcept = delete;			 // copy ctor, const lval
+	Food &operator=(const Food &) noexcept = delete; // copy assg, const lval
+	Food(Food &&) noexcept = default;				 // move ctor, non-const rval (std::move)
+	Food &operator=(Food &&) noexcept = default;	 // move assg, non-const rval (std::move)
+
 	auto Draw() -> void {
 		DrawTexture(m_texture, m_posX * GameConfig::cellSize, m_posY * GameConfig::cellSize, WHITE);
 	}
@@ -67,19 +64,11 @@ class Food {
 
 class Game {
   public:
-	Game(Food &&food) : m_food(std::move(food)) {
-
-		InitWindow(static_cast<int>(GameConfig::windowWidth), static_cast<int>(GameConfig::windowHeight),
-				   GameConfig::gameTitle);
-		SetTargetFPS(60);
-
-		m_food.Init();
+	Game() : m_food(Food{generateRandomPos()}) {
 	}
 
 	// Game() = delete; // remove default ctor
-	~Game() {
-		CloseWindow();
-	}
+	~Game() = default;
 
 	// copy & move operator
 	Game(const Game &) noexcept = delete;			 // copy ctor, const lval
@@ -109,12 +98,22 @@ class Game {
 	auto Draw_prv() -> void {
 		m_food.Draw();
 	}
+
+	auto generateRandomPos() -> Vector2 {
+		auto x = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
+		auto y = static_cast<float>(GetRandomValue(0, GameConfig::cellCount - 1));
+		return Vector2{.x = x, .y = y};
+	}
 };
 
 auto main() -> int {
-	Food food{Vector2{.x = 5, .y = 6}};
-	Game game{std::move(food)};
+	InitWindow(static_cast<int>(GameConfig::windowWidth), static_cast<int>(GameConfig::windowHeight),
+			   GameConfig::gameTitle);
+	SetTargetFPS(60);
 
+	Game game{};
 	game.Run();
+
+	CloseWindow();
 	return 0;
 }
