@@ -1,11 +1,6 @@
-#include <array>
-#include <concepts>
+#include <deque>
 #include <fmt/base.h>
-#include <functional>
 #include <raylib.h>
-#include <string>
-#include <type_traits>
-#include <utility>
 
 namespace GameConfig {
 constexpr const char *gameTitle{"Pong Game"};
@@ -62,9 +57,35 @@ class Food {
 	int m_posX, m_posY;
 };
 
+class Snake {
+  public:
+	Snake() = default;
+	~Snake() = default;
+
+	Snake(const Snake &) noexcept = delete;			   // copy ctor, const lval
+	Snake &operator=(const Snake &) noexcept = delete; // copy assg, const lval
+	Snake(Snake &&) noexcept = default;				   // move ctor, non-const rval (std::move)
+	Snake &operator=(Snake &&) noexcept = default;	   // move assg, non-const rval (std::move)
+
+	auto Draw() -> void {
+		for (size_t i = 0; i < body.size(); ++i) {
+			int x = body[i].x;
+			int y = body[i].y;
+			DrawRectangle(x * GameConfig::cellSize, y * GameConfig::cellSize, GameConfig::cellSize,
+						  GameConfig::cellSize, WHITE);
+		}
+	}
+
+	auto Update() -> void {
+	}
+
+  private:
+	std::deque<Vector2> body = {Vector2{6, 9}, Vector2{5, 9}, Vector2{4, 9}};
+};
+
 class Game {
   public:
-	Game() : m_food(Food{generateRandomPos()}) {
+	Game(Snake &&snake) : m_food(Food{generateRandomPos()}), m_snake(std::move(snake)) {
 	}
 
 	// Game() = delete; // remove default ctor
@@ -90,13 +111,16 @@ class Game {
 
   private:
 	Food m_food;
+	Snake m_snake;
 
 	auto Update_prv() -> void {
 		m_food.Update();
+		m_snake.Update();
 	}
 
 	auto Draw_prv() -> void {
 		m_food.Draw();
+		m_snake.Draw();
 	}
 
 	auto generateRandomPos() -> Vector2 {
@@ -111,7 +135,8 @@ auto main() -> int {
 			   GameConfig::gameTitle);
 	SetTargetFPS(60);
 
-	Game game{};
+	Snake snake{};
+	Game game{std::move(snake)};
 	game.Run();
 
 	CloseWindow();
