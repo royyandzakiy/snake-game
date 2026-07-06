@@ -64,7 +64,7 @@ find_package(raylib CONFIG REQUIRED)
 #=========================
 # Targets
 #=========================
-add_subdirectory(src/hello)
+add_subdirectory(src/snake)
 
 #=========================
 # Tests & Coverage
