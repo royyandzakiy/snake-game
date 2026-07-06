@@ -1,3 +1,4 @@
+// src/snake/food.hpp
 #pragma once
 #include "config.hpp"
 #include <cstdio>

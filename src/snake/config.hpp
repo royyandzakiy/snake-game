@@ -1,3 +1,4 @@
+// src/snake/config.hpp
 #pragma once
 #include <raylib.h>
 

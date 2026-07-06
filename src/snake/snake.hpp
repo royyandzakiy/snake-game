@@ -1,3 +1,4 @@
+// src/snake/snake.hpp
 #pragma once
 #include "config.hpp"
 #include <algorithm>

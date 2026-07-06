@@ -1,3 +1,4 @@
+// src/snake/game.hpp
 #pragma once
 #include "config.hpp"
 #include "food.hpp"

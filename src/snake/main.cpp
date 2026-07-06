@@ -1,3 +1,4 @@
+// src/snake/main.cpp
 #include "config.hpp"
 #include "game.hpp"
 #include "snake.hpp"
