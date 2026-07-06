@@ -6,8 +6,8 @@ constexpr const char *gameTitle{"Pong Game"};
 constexpr float cellSize{30};
 constexpr int cellCount{10};
 constexpr int borderOffset{75};
-constexpr float windowWidth{(2 * borderOffset) + (cellSize * cellCount)};
-constexpr float windowHeight{(2 * borderOffset) + (cellSize * cellCount)};
+constexpr int windowWidth{static_cast<int>((2 * borderOffset) + (cellSize * cellCount))};
+constexpr int windowHeight{static_cast<int>((2 * borderOffset) + (cellSize * cellCount))};
 constexpr float snakeDefaultMoveSpeed = 10.0f;
 }; // namespace GameConfig
 
