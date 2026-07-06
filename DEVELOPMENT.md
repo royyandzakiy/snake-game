@@ -1,5 +1,4 @@
-- border
-
-- thread
-- ranges
-- add more clang tidy
+- compile & run on linux
+- wrap to able to run with wasm
+- wrap to able to run with raymob
+- run on esp32 tft

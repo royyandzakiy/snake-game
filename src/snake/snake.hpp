@@ -38,12 +38,17 @@ class Snake {
 	}
 
 	auto Draw() -> void {
-		std::ranges::for_each(body, [](const auto &segmentPos) {
+		bool isHead = true;
+		Color colorSelected{};
+		std::ranges::for_each(body, [&isHead, &colorSelected](const auto &segmentPos) {
 			Rectangle segment{.x = GameConfig::borderOffset + segmentPos.x * GameConfig::cellSize,
 							  .y = GameConfig::borderOffset + segmentPos.y * GameConfig::cellSize,
 							  .width = GameConfig::cellSize,
 							  .height = GameConfig::cellSize};
-			DrawRectangleRounded(segment, 0.5, 6, GameColors::SnakeColor);
+			colorSelected = isHead ? GameColors::SnakeHeadColor : GameColors::SnakeColor;
+			if (isHead)
+				isHead = false;
+			DrawRectangleRounded(segment, 0.5, 6, colorSelected);
 		});
 	}
 

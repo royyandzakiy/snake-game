@@ -2,6 +2,8 @@
 
 A modern C++ implementation of the classic Snake game using raylib. This project follows C++ Core Guidelines, implements modern C++23 practices, and is built with a professional CMake configuration supporting multiple compilers and platforms.
 
+![screenshot](assets/imgs/ss.png)
+
 ## Features
 
 - Classic snake gameplay with smooth controls

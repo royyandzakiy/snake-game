@@ -30,7 +30,7 @@ class Game {
 			DrawText("Retro Snake", GameConfig::borderOffset - 5, 20, 40, GameColors::BorderColor);
 			DrawText(std::to_string(gameScore).c_str(), GameConfig::borderOffset - 5,
 					 GameConfig::borderOffset + GameConfig::cellSize * GameConfig::cellCount + 10, 40,
-					 GameColors::BorderColor);
+					 GameColors::ScoreColor);
 			DrawRectangleLinesEx(Rectangle{.x = GameConfig::borderOffset - 5,
 										   .y = GameConfig::borderOffset - 5,
 										   .width = GameConfig::cellSize * GameConfig::cellCount + 10,
